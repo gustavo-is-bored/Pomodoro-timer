@@ -3,117 +3,109 @@ import math
 import winsound
 
 run = False
-t = 0
 delt = 0
-pshort = False
-plong = False
+valid = False
 noise = False
-pomodoro = [5, 5, 5]  #  [50*60, 10*60, 25*60]
-n = 0
-session = 0
-long = 0
-short = 0
+pomodoro = [50*60, 10*60, 25*60]
+sessions = ["Work session", "Short break", "Long break"]
 freq1 = 840
 freq2 = 560
 duration = 900
 blip = math.trunc(duration/2)
 
-def start():
-    global run, t1
-    print("Starting work session! (" + str(math.trunc(pomodoro[0]/60)) + " minutes)")
-    worksound()
-    run = True
-    t1 = tm.time()
-
-def shortbreak():
-    global t2, pshort
-    print("Starting short break!")
-    pshort = True
-    t2 = tm.time()
-
-def longbreak():
-    global t2, plong
-    print("Starting long break!")
-    plong = True
-    t2 = tm.time()
-
-def worksound():
+def insound():
     winsound.Beep(freq1, duration)
     winsound.Beep(freq1, blip)
     winsound.Beep(freq2, duration)
 
-def breaksound():
+def outsound():
     winsound.Beep(freq2, duration+50)
     winsound.Beep(freq1, duration+200)
 
-
+def session(time):
+    t1 = tm.time()
+    insound()
+    while True:
+        delt = round(tm.time() - t1)
+        session = (delt % (pomodoro[0]+pomodoro[1]+2))
+        if session <= time:
+                    work = time - session
+                    seconds = work % 60
+                    minutes = math.trunc(work/60)
+                    if work == 1 and noise == False: 
+                        outsound()
+                        noise = True
+                    if work == 2:
+                        noise = False
+        else:
+             break
 
 while True:
-    
-    
-    init = input("Are you ready to begin? (y/n): ")
-    if init == "y" or init == "Y" or init == "yes" or init == "Yes" or init == "YES":
-        start()
-    elif init == "n" or init == "N":
-        print("Wow. Okay. Fuck you too then.")
+    init = input("Hello! Are you ready to start? (y/n): ")
+    if init == "y":
+        while valid == False:
+            custo = input("Enter 1 to use default sessions, or 2 to customise: ")
+
+            if custo == "1" or custo == "2":
+                valid = True
+            else:
+                print("Invalid input. Please enter 1 or 2.")
+
+            if custo == "2":
+                for i in range(3):
+                    while True: 
+                        n = input(sessions[i] + " in minutes: ")
+
+                        try:
+                            int(n)
+                        except ValueError:
+                            print("Invalid input. Please input an integer number.")
+                        else:
+                            pomodoro[i] = int(n)*60
+                            break
+                print("Okay, preferences saved.")
+            if custo == "1":
+                print("Got it. Short breaks will automatically begin after work sessions.")
+            if valid == True:
+                valid = False
+                while valid == False:
+                    auto = input("Would you like to automate sessions? (y/n): ")
+                    if auto == "y" or auto == "n":
+                        valid = True
+                    else:
+                        print("Invalid input. Please enter 1 or 2.")
+                                      
+                    if auto == "y":
+                        print("Got it. A short break will automatically begin after each work session")
+                        tm.sleep(1)
+                        while True:
+                            print("Starting work session! (" + str(math.trunc(pomodoro[0]/60)) + " minutes)")
+                            session(pomodoro[0])
+                            print("Starting short break! (" + str(math.trunc(pomodoro[1]/60)) + " minutes)")
+                            session(pomodoro[1])
+                    if auto == "n":
+                        print("Got it. I'll check before we begin sessions, and you'll have the chance to choose a longer break, or dive right into another work session")
+                        tm.sleep(1)
+                        print("Starting work session! (" + str(math.trunc(pomodoro[0]/60)) + " minutes)")
+                        session(pomodoro[0])
+                        valid = True
+                        while valid == True:
+                            n = input("Enter 1 for a work session, 2 for a short break, 3 for a long break, or 4 to automate: ")
+
+                            if n == "1":
+                                print("Starting work session! (" + str(math.trunc(pomodoro[0]/60)) + " minutes)")
+                                session(pomodoro[0])
+                            elif n == "2":
+                                print("Starting short break! (" + str(math.trunc(pomodoro[1]/60)) + " minutes)")
+                                session(pomodoro[1])
+                            elif n == "3":
+                                print("Starting long break! (" + str(math.trunc(pomodoro[2]/60)) + " minutes)")
+                                session(pomodoro[2])
+                            elif n == "4":
+                                valid = False
+                            else:
+                                print("Invalid input. Please choose 1, 2, 3, or 4.")
+    if init == "n":
+        print("Goodbye!") 
         break
-    else:
-        print("Invalid input. How did you manage to fuck this up?")
-    
-    while run == True:
-        delt = round(tm.time() - t1)
-        n = math.trunc((delt+pomodoro[1]+1)/(pomodoro[0]+pomodoro[1]+2))
-        session = (delt % (pomodoro[0]+pomodoro[1]+2))
-
-        while plong == True:
-            long = pomodoro[2] - round(tm.time() - t2)
-            seconds = long % 60
-            minutes = math.trunc(long/60)
-
-            if long+1 <= 0:
-                plong = False
-                t1 = t1 + pomodoro[2]
-            if long == 2:
-                noise = False
-            if long == 1 and noise == False:
-                winsound.Beep(freq1, duration)
-                winsound.Beep(freq2, duration)
-                #wazzy.play()
-                noise = True
-
-        while pshort == True:
-            short = pomodoro[1] - round(tm.time() - t2)
-            seconds = short % 60
-            minutes = math.trunc(short/60)
-            if short+1 <= 0:
-                pshort = False
-                t1 = t1 + pomodoro[1]
-            if short == 2:
-                noise = False
-            if short == 1 and noise == False:
-                winsound.Beep(freq1, duration)
-                winsound.Beep(freq2, duration)
-                #wazzy.play()
-                noise = True
-
-        if session <= pomodoro[0]:
-            work = pomodoro[0] - session
-            seconds = work % 60
-            minutes = math.trunc(work/60)
-            if work == 1 and noise == False: 
-                print("Work done - short break (" + str(math.trunc(pomodoro[1]/60)) + " minutes)")
-                breaksound()
-                noise = True
-            if work == 2:
-                noise = False
-            
-        if pomodoro[1]+pomodoro[0]+1 >= session > pomodoro[0]:
-            short = round(pomodoro[1]+1 - (session - pomodoro[0]))
-            seconds = short % 60
-            minutes = math.trunc(short/60)
-            if short == 1 and noise == False:
-                print("Back to work! (" + str(math.trunc(pomodoro[0]/60)) + " minutes)")
-                worksound()
-                noise = True
-            if short == 2:
-                noise = False
+    else: print("Invalid input. Please enter y or n.")
